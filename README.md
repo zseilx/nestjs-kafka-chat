@@ -11,3 +11,5 @@ docker run -d --name kafka -p 9092:9092 \
 --env KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
 --env KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 \
 --link zookeeper wurstmeister/kafka
+
+docker compose -f docker-compose-dev.yml -p nestjs-kafka-chat up -d

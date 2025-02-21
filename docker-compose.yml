@@ -1,0 +1,104 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: always
+    ports:
+      - '3090:3090'
+    env_file:
+      - backend/.env
+    environment:
+      - DATABASE_URL=postgresql://timelygpt:4958timelygpt@postgres:5432/timelygpt?schema=public
+      - PORT=3090
+#      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+    networks:
+      - default
+
+  langchain:
+    build:
+      context: .
+      dockerfile: langchain/Dockerfile
+    restart: always
+    ports:
+      - '3091:3091'
+    env_file:
+        - langchain/.env
+    environment:
+        - DATABASE_URL=postgresql://timelygpt:4958timelygpt@postgres:5432/timelygpt?schema=public
+        - CHROMA_URL=http://chroma:8000
+        - PORT=3091
+    depends_on:
+      - postgres
+      - backend
+      - chroma
+    networks:
+      - default
+
+  realtime:
+    build:
+      context: .
+      dockerfile: realtime/Dockerfile
+    restart: always
+    ports:
+      - '3092:3092'
+    env_file:
+      - realtime/.env
+    environment:
+      - LANGCHAIN_API_URL=http://langchain:3091
+      - PORT=3092
+    depends_on:
+      - langchain
+    networks:
+      - default
+
+  postgres:
+    image: postgres:16.3
+    restart: always
+    environment:
+      - POSTGRES_USER=timelygpt
+      - POSTGRES_PASSWORD=4958timelygpt
+      - POSTGRES_DB=timelygpt
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+    networks:
+      - default
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y locales &&
+        sed -i -e 's/# ko_KR.UTF-8 UTF-8/ko_KR.UTF-8 UTF-8/' /etc/locale.gen &&
+        locale-gen &&
+        update-locale LANG=ko_KR.UTF-8 &&
+        docker-entrypoint.sh postgres"
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    restart: always
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma:/chroma/data
+    networks:
+      - default
+
+
+#  redis:
+#    image: redis:6.2.6
+#    restart: always
+#    ports:
+#      - '6379:6379'
+#    volumes:
+#      - redis:/data
+
+
+volumes:
+  postgres:
+  chroma:
+
+networks:
+  default:

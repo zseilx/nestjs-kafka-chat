@@ -1,6 +1,7 @@
 import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
 import { Client, ClientKafkaProxy, Transport } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
+import * as process from 'node:process';
 
 @Controller()
 export class AppController {
@@ -9,7 +10,7 @@ export class AppController {
     options: {
       client: {
         clientId: 'api-gateway',
-        brokers: ['localhost:9092'],
+        brokers: [process.env.KAFKA_BROKER],
       },
     },
   })

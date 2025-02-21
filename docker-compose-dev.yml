@@ -1,0 +1,98 @@
+services:
+  api-gateway:
+    image: node:20
+    platform: linux/amd64
+    ports:
+      - '3000:3000'
+    env_file:
+      - api-gateway/.env
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    networks:
+      - default
+    working_dir: /app
+#    entrypoint: /bin/sh -c "corepack enable yarn && yarn && npx prisma migrate deploy && npm run start:dev"
+    entrypoint: /bin/sh -c "corepack enable yarn && yarn && npm run start:dev"
+    volumes:
+      - ./api-gateway:/app
+
+  user-service:
+    image: node:20
+    platform: linux/amd64
+    env_file:
+      - user-service/.env
+    environment:
+      - DATABASE_URL=postgresql://jungyh:jungyh!23@postgres:5432/chat?schema=public
+      - KAFKA_BROKER=kafka:9092
+    networks:
+      - default
+    working_dir: /app
+    entrypoint: /bin/sh -c "
+      corepack enable yarn && \
+      yarn && \
+      npx prisma migrate deploy && \
+      npm run start:dev"
+    #      sed -i 's/^# \(ko_KR.UTF-8 UTF-8\)/\1/' /etc/locale.gen && locale-gen && \
+    volumes:
+      - ./user-service:/app
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+
+  postgres:
+    image: postgres:16.3
+    restart: no
+    environment:
+      - POSTGRES_USER=jungyh
+      - POSTGRES_PASSWORD=jungyh!23
+      - LANG=ko_KR.UTF-8
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - default
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y locales &&
+        sed -i -e 's/# ko_KR.UTF-8 UTF-8/ko_KR.UTF-8 UTF-8/' /etc/locale.gen &&
+        locale-gen &&
+        update-locale LANG=ko_KR.UTF-8 &&
+        docker-entrypoint.sh postgres"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT"
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+
+volumes:
+  postgres:
+#  chroma:
+
+networks:
+  default:

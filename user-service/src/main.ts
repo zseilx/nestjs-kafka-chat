@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import * as process from 'node:process';
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -10,7 +11,7 @@ async function bootstrap() {
       options: {
         client: {
           clientId: 'user-service',
-          brokers: ['localhost:9092'],
+          brokers: [process.env.KAFKA_BROKER],
         },
         consumer: {
           groupId: 'user-service-group', // 유니크하게 지정할 것
