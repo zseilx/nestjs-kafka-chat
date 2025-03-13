@@ -7,6 +7,7 @@ services:
     env_file:
       - api-gateway/.env
     environment:
+      - DATABASE_URL=postgresql://jungyh:jungyh!23@postgres:5432/auth?schema=public
       - KAFKA_BROKER=kafka:9092
     networks:
       - default
@@ -24,7 +25,7 @@ services:
     env_file:
       - user-service/.env
     environment:
-      - DATABASE_URL=postgresql://jungyh:jungyh!23@postgres:5432/chat?schema=public
+      - DATABASE_URL=postgresql://jungyh:jungyh!23@postgres:5432/user?schema=public
       - KAFKA_BROKER=kafka:9092
     networks:
       - default
@@ -37,6 +38,28 @@ services:
     #      sed -i 's/^# \(ko_KR.UTF-8 UTF-8\)/\1/' /etc/locale.gen && locale-gen && \
     volumes:
       - ./user-service:/app
+    depends_on:
+      - postgres
+
+  chat-service:
+    image: node:20
+    platform: linux/amd64
+    env_file:
+      - chat-service/.env
+    environment:
+      - DATABASE_URL=postgresql://jungyh:jungyh!23@postgres:5432/chat?schema=public
+      - KAFKA_BROKER=kafka:9092
+    networks:
+      - default
+    working_dir: /app
+    entrypoint: /bin/sh -c "
+      corepack enable yarn && \
+      yarn && \
+      npx prisma migrate deploy && \
+      npm run start:dev"
+    #      sed -i 's/^# \(ko_KR.UTF-8 UTF-8\)/\1/' /etc/locale.gen && locale-gen && \
+    volumes:
+      - ./chat-service:/app
     depends_on:
       - postgres
 
