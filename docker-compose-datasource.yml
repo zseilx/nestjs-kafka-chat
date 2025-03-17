@@ -10,7 +10,7 @@ services:
       - postgres:/var/lib/postgresql/data
     ports:
       - '5432:5432'
-    command: >
+    command:
       bash -c "
         apt-get update &&
         apt-get install -y locales &&

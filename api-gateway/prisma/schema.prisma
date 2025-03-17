@@ -12,3 +12,37 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model SocialAuth {
+  id         String   @id @default(cuid()) @db.VarChar(25)
+  userId     String   @db.VarChar(25)
+  provider   String   @db.VarChar(16)
+  providerId String   @db.VarChar(254)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+
+model UserSession {
+  id           String   @id @default(cuid()) @db.VarChar(25)
+  userId       String   @db.VarChar(25)
+  refreshToken String   @db.VarChar(16)
+  deviceId     String   @db.VarChar(254)
+  deviceName   String   @db.VarChar(255)
+  ip           String?  @db.VarChar(45)
+  userAgent    String?  @db.Text
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  expiresAt    DateTime @db.Timestamptz(6)
+
+  @@unique([refreshToken, deviceId])
+  @@index([userId])
+}
+
+model UserRole {
+  id     String @id @default(cuid()) @db.VarChar(25)
+  userId String @db.VarChar(25)
+  role   String @unique @db.VarChar(25)
+
+  @@index([userId])
+}
