@@ -12,12 +12,16 @@ services:
     networks:
       - default
     working_dir: /app
-#    entrypoint: /bin/sh -c "corepack enable yarn && yarn && npx prisma migrate deploy && npm run start:dev"
-    entrypoint: /bin/sh -c "corepack enable yarn && yarn && npm run start:dev"
+    entrypoint: /bin/sh -c "
+      corepack enable yarn && \
+      yarn && \
+      npx prisma migrate deploy && \
+      npm run start:dev"
     volumes:
       - ./api-gateway:/app
     depends_on:
       - postgres
+      - kafka
 
   user-service:
     image: node:20
@@ -39,7 +43,9 @@ services:
     volumes:
       - ./user-service:/app
     depends_on:
+      - api-gateway
       - postgres
+      - kafka
 
   chat-service:
     image: node:20
@@ -61,7 +67,9 @@ services:
     volumes:
       - ./chat-service:/app
     depends_on:
+      - api-gateway
       - postgres
+      - kafka
 
   nginx:
     image: nginx:latest
