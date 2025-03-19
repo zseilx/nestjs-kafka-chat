@@ -1,7 +1,7 @@
 import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
 import { Client, ClientKafkaProxy, Transport } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
 import * as process from 'node:process';
+import { lastValueFrom } from 'rxjs';
 
 @Controller()
 export class AppController {
@@ -21,6 +21,16 @@ export class AppController {
 
   async onModuleInit() {
     this.client.subscribeToResponseOf('findAllUsers');
+  }
+
+  @Get('health/liveness')
+  async healthLiveness(): Promise<any> {
+    return { status: 'ok' };
+  }
+
+  @Get('health/readiness')
+  async healthReadiness(): Promise<any> {
+    return { status: 'ok' };
   }
 
   @Get('/users')

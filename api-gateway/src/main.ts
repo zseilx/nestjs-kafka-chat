@@ -13,6 +13,16 @@ async function bootstrap() {
   //   },
   // });
 
+  // app.useGlobalFilters(new GlobalExceptionFilter()); // 현재 필요 없음.
+
+  app.setGlobalPrefix(process.env.GLOBAL_PREFIX || '/api');
+
+  app.enableCors({
+    exposedHeaders: ['content-disposition'],
+    origin: '*',
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
